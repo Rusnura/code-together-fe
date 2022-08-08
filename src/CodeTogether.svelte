@@ -3,6 +3,7 @@
 	import LoginForm from "./LoginForm.svelte";
 	// import SockJS from "sockjs-client"; // why not works?
 	import Stomp from "webstomp-client";
+	import CodeTextarea from "./components/CodeTextarea.svelte";
 
 	let sessionInfo = {
 		isUserLoggedIn: false,
@@ -11,8 +12,13 @@
 		stompClient: null
 	}
 
-	let textareaInfo = {
-		text: ''
+	let textareaProperties = {
+		selectionStart: 0,
+		selectionEnd: 0,
+		cols: 150,
+		rows: 20,
+		text: '',
+		cursors: []
 	}
 
 	let successfulLoginCallback = () => {
@@ -23,14 +29,27 @@
 		frame => {
 			console.log("Connection frame: ", frame);
 
-			sessionInfo.stompClient.subscribe("/room/room1", (message) => {
+			sessionInfo.stompClient.subscribe("/code-together/room/room1", (message) => {
 				let jsonMessage = JSON.parse(message.body);
-				console.log("Message over sockjs: ", jsonMessage, "isUserEqual: ", jsonMessage.username === sessionInfo.username);
 				if (jsonMessage.username === sessionInfo.username) {
 					console.log("Ignore. Message from myself!");
-				} else {
-					textareaInfo.text = jsonMessage.text;
+					return;
 				}
+
+				switch (jsonMessage.type) {
+					case "CONNECT":
+						onConnectEventCallback(jsonMessage);
+					break;
+
+					case "TYPE":
+						onTypeEventCallback(jsonMessage);
+					break;
+
+					default:
+						console.log("No event handler found!");
+				}
+			}, {
+				"username": sessionInfo.username
 			});
 		},
 		error => {
@@ -44,14 +63,38 @@
 		console.log("failureLoginCallback: sessionInfo=", sessionInfo);
 	}
 
-	let textareaEditCallback = function () {
+	let textareaEditCallback = function (cursorInfo) {
 		if (sessionInfo.stompClient && sessionInfo.stompClient.connected) {
 			sessionInfo.stompClient.send("/code-together/room/{roomId}", JSON.stringify({
 				roomId: sessionInfo.roomId,
 				username: sessionInfo.username,
-				text: textareaInfo.text
+				startCursorPosition: cursorInfo.startCursorPosition,
+				endCursorPosition: cursorInfo.endCursorPosition,
+				key: cursorInfo.key
 			}), {});
 		}
+	}
+
+	let onConnectEventCallback = function (message) {
+		console.log("!!! CONNECTION EVENT !!!", message);
+		textareaProperties.cursors.push({
+			roomId: message.roomId,
+			username: message.username,
+			startCursorPosition: message.startCursorPosition,
+			endCursorPosition: message.endCursorPosition
+		});
+		console.log("!!! CONNECTION EVENT !!! Pushed new cursor to textareaProperties: ", textareaProperties);
+	};
+
+	let onTypeEventCallback = function (message) {
+		let textarea = document.getElementById("codeTextarea");
+		console.log("!!! TYPE EVENT !!!", message);
+		let start = message.startCursorPosition;
+		let end = message.endCursorPosition;
+		let before = textarea.value.substring(0, start);
+		let after = textarea.value.substring(end, textarea.value.length);
+
+		textarea.value = before + message.key + after;
 	}
 </script>
 
@@ -66,10 +109,10 @@
 		/>
 	{:else}
 		Добро пожаловать, {sessionInfo.username}!<br>
-		<textarea cols="150"
-				  rows="20"
-				  bind:value={textareaInfo.text}
-				  on:keyup={textareaEditCallback}></textarea>
+		<CodeTextarea
+				bind:textareaProperties={textareaProperties}
+				onKeyUpCallback="{textareaEditCallback}">
+		</CodeTextarea>
 	{/if}
 </main>
 
