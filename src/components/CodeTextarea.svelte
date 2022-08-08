@@ -1,8 +1,8 @@
 <script>
     export let textareaProperties;
-    export let onKeyUpCallback;
+    export let onKeyDownCallback;
 
-    let onKeyUpEvent = function (e) {
+    let onKeyDownEvent = function (e) {
         let textarea = document.getElementById("codeTextarea");
         let startCursorPosition = textarea.selectionStart;
         let endCursorPosition = textarea.selectionEnd;
@@ -12,7 +12,7 @@
             endCursorPosition: endCursorPosition,
             key: e.key
         };
-        onKeyUpCallback(cursorInfo);
+        onKeyDownCallback(cursorInfo);
     };
 
     let onTypeEventCallback = function (message) {
@@ -25,7 +25,8 @@
               cols={textareaProperties.cols}
               rows={textareaProperties.rows}
               bind:value={textareaProperties.text}
-              on:keyup={onKeyUpEvent}></textarea>
+              on:keyup={onKeyDownEvent}
+              on:click={onKeyDownEvent}></textarea>
 </main>
 
 <style>

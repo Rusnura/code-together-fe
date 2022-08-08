@@ -81,20 +81,44 @@
 			roomId: message.roomId,
 			username: message.username,
 			startCursorPosition: message.startCursorPosition,
-			endCursorPosition: message.endCursorPosition
+			endCursorPosition: message.endCursorPosition,
 		});
 		console.log("!!! CONNECTION EVENT !!! Pushed new cursor to textareaProperties: ", textareaProperties);
 	};
 
 	let onTypeEventCallback = function (message) {
-		let textarea = document.getElementById("codeTextarea");
 		console.log("!!! TYPE EVENT !!!", message);
-		let start = message.startCursorPosition;
-		let end = message.endCursorPosition;
-		let before = textarea.value.substring(0, start);
-		let after = textarea.value.substring(end, textarea.value.length);
+		for (let i = 0; i < textareaProperties.cursors.length; i++) {
+			let cursorOwnerInfo = textareaProperties.cursors[i];
+			if (cursorOwnerInfo.username === message.username) {
+				console.log("The owner found: ", cursorOwnerInfo);
+				handleKey(cursorOwnerInfo, message);
+			}
+		}
+	}
 
-		textarea.value = before + message.key + after;
+	let handleKey = function (cursorOwnerInfo, message) {
+		let textarea = document.getElementById("codeTextarea");
+		let navigationStuff = ["ArrowUp", "ArrowDown", "ArrowRight", "ArrowLeft", "Home", "End", null];
+		if (navigationStuff.includes(message.key)) {
+			console.log("It's navigation stuff. Processing!!!")
+			cursorOwnerInfo.startCursorPosition = message.startCursorPosition;
+			cursorOwnerInfo.endCursorPosition = message.endCursorPosition;
+
+			console.log("new cursorOwnerInfo=", cursorOwnerInfo);
+		} else {
+			console.log("It's NOT navigation stuff. Processing as text!!!")
+			let start = cursorOwnerInfo.startCursorPosition;
+			let end = cursorOwnerInfo.endCursorPosition;
+			let before = textarea.value.substring(0, start);
+			let after = textarea.value.substring(end, textarea.value.length);
+
+
+			// WHAT I NEED DO HERE???
+			cursorOwnerInfo.startCursorPosition = message.startCursorPosition;
+			cursorOwnerInfo.endCursorPosition = message.endCursorPosition;
+			textarea.value = before + message.key + after;
+		}
 	}
 </script>
 
@@ -111,7 +135,7 @@
 		Добро пожаловать, {sessionInfo.username}!<br>
 		<CodeTextarea
 				bind:textareaProperties={textareaProperties}
-				onKeyUpCallback="{textareaEditCallback}">
+				onKeyDownCallback="{textareaEditCallback}">
 		</CodeTextarea>
 	{/if}
 </main>
