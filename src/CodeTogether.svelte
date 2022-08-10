@@ -31,12 +31,9 @@
 
 			sessionInfo.stompClient.subscribe("/code-together/room/room1", (message) => {
 				let jsonMessage = JSON.parse(message.body);
-				if (jsonMessage.username === sessionInfo.username) {
-					console.log("Ignore. Message from myself!");
-					return;
-				}
+				textareaProperties.text = jsonMessage.text;
 
-				switch (jsonMessage.type) {
+				/*switch (jsonMessage.type) {
 					case "CONNECT":
 						onConnectEventCallback(jsonMessage);
 					break;
@@ -47,7 +44,7 @@
 
 					default:
 						console.log("No event handler found!");
-				}
+				}*/
 			}, {
 				"username": sessionInfo.username
 			});
@@ -76,25 +73,11 @@
 	}
 
 	let onConnectEventCallback = function (message) {
-		console.log("!!! CONNECTION EVENT !!!", message);
-		textareaProperties.cursors.push({
-			roomId: message.roomId,
-			username: message.username,
-			startCursorPosition: message.startCursorPosition,
-			endCursorPosition: message.endCursorPosition,
-		});
-		console.log("!!! CONNECTION EVENT !!! Pushed new cursor to textareaProperties: ", textareaProperties);
+		console.log("!!! CONNECTION EVENT !!! Message: ", message);
 	};
 
 	let onTypeEventCallback = function (message) {
 		console.log("!!! TYPE EVENT !!!", message);
-		for (let i = 0; i < textareaProperties.cursors.length; i++) {
-			let cursorOwnerInfo = textareaProperties.cursors[i];
-			if (cursorOwnerInfo.username === message.username) {
-				console.log("The owner found: ", cursorOwnerInfo);
-				handleKey(cursorOwnerInfo, message);
-			}
-		}
 	}
 
 	let handleKey = function (cursorOwnerInfo, message) {

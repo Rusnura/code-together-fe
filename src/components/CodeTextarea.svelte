@@ -26,6 +26,7 @@
               rows={textareaProperties.rows}
               bind:value={textareaProperties.text}
               on:keyup={onKeyDownEvent}
+
               on:click={onKeyDownEvent}></textarea>
 </main>
 
