@@ -1,37 +1,20 @@
 <script>
-    let keys;
-    let values;
-    let entries;
+    let cursors;
 
     export let textareaProperties;
     $: {
-        keys = Object.keys(textareaProperties.cursors);
-        console.log("DebugComponent: cursors keys: ", keys);
-        values = Object.values(textareaProperties.cursors);
-        console.log("DebugComponent: cursors values: ", values);
-        entries = Object.entries(textareaProperties.cursors);
-        console.log("DebugComponent: cursors entries: ", entries);
+        cursors = Object.entries(textareaProperties.cursors);
+        console.log("DebugComponent: cursors entries: ", cursors);
     }
     export let cursorInfo;
+    export let sessionInfo;
 </script>
 
 <main>
-    <h2>Отладочная информация:</h2>
-    <h3>Информация о моём курсоре:</h3>
-    Позиция начала:<br>
-    <input type="text" readonly bind:value={cursorInfo.startCursorPosition} />
-    <br>
-    Конечная позиция:<br>
-    <input type="text" readonly bind:value={cursorInfo.endCursorPosition} />
-    <hr>
-    {#each entries as [key, value]}
-        Пользователь: {key}<br>
-        Позиция начала:<br>
-        <input type="text" readonly bind:value={value.startCursorPosition} />
-        <br>
-        Конечная позиция:<br>
-        <input type="text" readonly bind:value={value.endCursorPosition} />
-        <br>
+    <h3>Отладочная информация:</h3>
+    Курсор пользователя: {sessionInfo.username}: <i>{cursorInfo.startCursorPosition}/{cursorInfo.endCursorPosition}</i><br>
+    {#each cursors as [user, cursor]}
+        Курсор пользователя: {user}: <i>{cursor.startCursorPosition}/{cursor.endCursorPosition}</i><br>
     {/each}
 </main>
 
