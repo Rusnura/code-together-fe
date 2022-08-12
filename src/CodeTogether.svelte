@@ -4,6 +4,7 @@
 	// import SockJS from "sockjs-client"; // why not works?
 	import Stomp from "webstomp-client";
 	import CodeTextarea from "./components/CodeTextarea.svelte";
+	import DebugComponent from "./components/DebugComponent.svelte";
 
 	let sessionInfo = {
 		isUserLoggedIn: false,
@@ -20,6 +21,7 @@
 	}
 
 	let cursorInfo = {
+		cursorOwner: sessionInfo.username,
 		startCursorPosition: 0,
 		endCursorPosition: 0,
 	}
@@ -30,11 +32,9 @@
 		sessionInfo.stompClient.connect({}, frame => {
 			console.log("Connection frame: ", frame);
 
-
-
-			sessionInfo.stompClient.subscribe("/code-together/room/room1", (raw) => {
+			sessionInfo.stompClient.subscribe("/code-together/room/" + sessionInfo.roomId, (raw) => {
+				console.log("--> Handle: ", "/code-together/room/" + sessionInfo.roomId, ". Message: ", raw);
 				let message = JSON.parse(raw.body);
-				console.log("Get message. ", message);
 				if (message.type === "connect") {
 					handleNewUserConnected(message);
 				} else if (message.type === "insert") {
@@ -42,6 +42,28 @@
 				} else if (message.type === "navigation") {
 					handleNavigation(message);
 				}
+			}, {
+				"username": sessionInfo.username
+			});
+
+			sessionInfo.stompClient.subscribe("/code-together/room/" + sessionInfo.roomId + "/status", (raw) => {
+				let message = JSON.parse(raw.body);
+				console.log("--> Handle: ", "/code-together/room/" + sessionInfo.roomId + "/status. Message: ", message);
+				textareaProperties.text = message.text;
+
+				for (let i = 0; i < message.clients.length; i++) {
+					let client = message.clients[i];
+					console.log("Cursor inserting processing: ", client);
+					if (client.username === sessionInfo.username)
+						continue;
+
+					textareaProperties.cursors[client.username] = {
+						startCursorPosition: client.startCursorPosition,
+						endCursorPosition: client.endCursorPosition
+					};
+				}
+
+				console.log("All cursors inserted: ", textareaProperties);
 			}, {
 				"username": sessionInfo.username
 			});
@@ -88,7 +110,7 @@
 
 	let textareaEditCallback = function (event) {
 		if (sessionInfo.stompClient && sessionInfo.stompClient.connected) {
-			sessionInfo.stompClient.send("/code-together/room/{roomId}", JSON.stringify({
+			sessionInfo.stompClient.send("/code-together/room/" + sessionInfo.roomId, JSON.stringify({
 				roomId: sessionInfo.roomId,
 				username: sessionInfo.username,
 				...cursorInfo,
@@ -99,21 +121,25 @@
 </script>
 
 <main>
-	<Header />
-
 	{#if !sessionInfo.isUserLoggedIn}
+		<Header />
+
 		<LoginForm
 				bind:sessionInfo="{sessionInfo}"
 				successfulLoginCallback="{successfulLoginCallback}"
 				failureLoginCallback="{failureLoginCallback}"
 		/>
 	{:else}
-		Добро пожаловать, {sessionInfo.username}!<br>
 		<CodeTextarea
 				bind:textareaProperties={textareaProperties}
 				bind:cursorInfo={cursorInfo}
 				onKeyDownCallback="{textareaEditCallback}">
 		</CodeTextarea>
+		<DebugComponent
+				bind:cursorInfo={cursorInfo}
+				bind:textareaProperties={textareaProperties}
+				bind:sessionInfo={sessionInfo}>
+		</DebugComponent>
 	{/if}
 </main>
 
