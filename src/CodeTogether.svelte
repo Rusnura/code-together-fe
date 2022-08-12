@@ -13,38 +13,35 @@
 	}
 
 	let textareaProperties = {
-		selectionStart: 0,
-		selectionEnd: 0,
 		cols: 150,
 		rows: 20,
 		text: '',
-		cursors: []
+		cursors: {}
+	}
+
+	let cursorInfo = {
+		startCursorPosition: 0,
+		endCursorPosition: 0,
 	}
 
 	let successfulLoginCallback = () => {
 		const socket = new WebSocket("ws://192.168.88.14:8081/code-together");
 		sessionInfo.stompClient = Stomp.over(socket);
-		sessionInfo.stompClient.connect(
-		{},
-		frame => {
+		sessionInfo.stompClient.connect({}, frame => {
 			console.log("Connection frame: ", frame);
 
-			sessionInfo.stompClient.subscribe("/code-together/room/room1", (message) => {
-				let jsonMessage = JSON.parse(message.body);
-				textareaProperties.text = jsonMessage.text;
 
-				/*switch (jsonMessage.type) {
-					case "CONNECT":
-						onConnectEventCallback(jsonMessage);
-					break;
 
-					case "TYPE":
-						onTypeEventCallback(jsonMessage);
-					break;
-
-					default:
-						console.log("No event handler found!");
-				}*/
+			sessionInfo.stompClient.subscribe("/code-together/room/room1", (raw) => {
+				let message = JSON.parse(raw.body);
+				console.log("Get message. ", message);
+				if (message.type === "connect") {
+					handleNewUserConnected(message);
+				} else if (message.type === "insert") {
+					handleInsert(message);
+				} else if (message.type === "navigation") {
+					handleNavigation(message);
+				}
 			}, {
 				"username": sessionInfo.username
 			});
@@ -56,51 +53,47 @@
 		console.log("successfulLoginCallback: sessionInfo=", sessionInfo);
 	}
 
+	let handleNavigation = function (message) {
+		if (message.username === sessionInfo.username)
+			return;
+
+		textareaProperties.cursors[message.username].startCursorPosition = message.startCursorPosition;
+		textareaProperties.cursors[message.username].endCursorPosition = message.endCursorPosition;
+	}
+
+	let handleInsert = function (message) {
+		if (message.username === sessionInfo.username)
+			return;
+
+		let start = textareaProperties.cursors[message.username].startCursorPosition;
+		let end = textareaProperties.cursors[message.username].endCursorPosition;
+		let before = textareaProperties.text.substring(0, start);
+		let after = textareaProperties.text.substring(end);
+		textareaProperties.text = before + message.key + after;
+	}
+
+	let handleNewUserConnected = function (message) {
+		if (message.username === sessionInfo.username)
+			return;
+
+		textareaProperties.cursors[message.username] = {
+			startCursorPosition: 0,
+			endCursorPosition: 0
+		};
+	};
+
 	let failureLoginCallback = function() {
 		console.log("failureLoginCallback: sessionInfo=", sessionInfo);
 	}
 
-	let textareaEditCallback = function (cursorInfo) {
+	let textareaEditCallback = function (event) {
 		if (sessionInfo.stompClient && sessionInfo.stompClient.connected) {
 			sessionInfo.stompClient.send("/code-together/room/{roomId}", JSON.stringify({
 				roomId: sessionInfo.roomId,
 				username: sessionInfo.username,
-				startCursorPosition: cursorInfo.startCursorPosition,
-				endCursorPosition: cursorInfo.endCursorPosition,
-				key: cursorInfo.key
+				...cursorInfo,
+				key: event.key
 			}), {});
-		}
-	}
-
-	let onConnectEventCallback = function (message) {
-		console.log("!!! CONNECTION EVENT !!! Message: ", message);
-	};
-
-	let onTypeEventCallback = function (message) {
-		console.log("!!! TYPE EVENT !!!", message);
-	}
-
-	let handleKey = function (cursorOwnerInfo, message) {
-		let textarea = document.getElementById("codeTextarea");
-		let navigationStuff = ["ArrowUp", "ArrowDown", "ArrowRight", "ArrowLeft", "Home", "End", null];
-		if (navigationStuff.includes(message.key)) {
-			console.log("It's navigation stuff. Processing!!!")
-			cursorOwnerInfo.startCursorPosition = message.startCursorPosition;
-			cursorOwnerInfo.endCursorPosition = message.endCursorPosition;
-
-			console.log("new cursorOwnerInfo=", cursorOwnerInfo);
-		} else {
-			console.log("It's NOT navigation stuff. Processing as text!!!")
-			let start = cursorOwnerInfo.startCursorPosition;
-			let end = cursorOwnerInfo.endCursorPosition;
-			let before = textarea.value.substring(0, start);
-			let after = textarea.value.substring(end, textarea.value.length);
-
-
-			// WHAT I NEED DO HERE???
-			cursorOwnerInfo.startCursorPosition = message.startCursorPosition;
-			cursorOwnerInfo.endCursorPosition = message.endCursorPosition;
-			textarea.value = before + message.key + after;
 		}
 	}
 </script>
@@ -118,6 +111,7 @@
 		Добро пожаловать, {sessionInfo.username}!<br>
 		<CodeTextarea
 				bind:textareaProperties={textareaProperties}
+				bind:cursorInfo={cursorInfo}
 				onKeyDownCallback="{textareaEditCallback}">
 		</CodeTextarea>
 	{/if}

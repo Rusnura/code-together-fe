@@ -1,23 +1,20 @@
 <script>
     export let textareaProperties;
     export let onKeyDownCallback;
+    export let cursorInfo;
 
     let onKeyDownEvent = function (e) {
+        console.log("onKeyDownEvent: ", e, "Key={", e.key, "}");
+        onKeyDownCallback(e);
+    };
+
+    let onKeyUpEvent = function (e) {
+        console.log("onKeyUpEvent: ", e.key);
         let textarea = document.getElementById("codeTextarea");
-        let startCursorPosition = textarea.selectionStart;
-        let endCursorPosition = textarea.selectionEnd;
-        console.log("Start: ", startCursorPosition, "End: ", endCursorPosition, "Key: ", e.key);
-        let cursorInfo = {
-            startCursorPosition: startCursorPosition,
-            endCursorPosition: endCursorPosition,
-            key: e.key
-        };
-        onKeyDownCallback(cursorInfo);
-    };
-
-    let onTypeEventCallback = function (message) {
-
-    };
+        cursorInfo.startCursorPosition = textarea.selectionStart;
+        cursorInfo.endCursorPosition = textarea.selectionEnd;
+        onKeyDownCallback({key: null});
+    }
 </script>
 
 <main>
@@ -25,9 +22,17 @@
               cols={textareaProperties.cols}
               rows={textareaProperties.rows}
               bind:value={textareaProperties.text}
-              on:keyup={onKeyDownEvent}
+              on:keydown={onKeyDownEvent}
+              on:keyup={onKeyUpEvent}
+              on:click={onKeyUpEvent}></textarea>
 
-              on:click={onKeyDownEvent}></textarea>
+    <div>
+        My start position:<br>
+        <input type="text" readonly bind:value={cursorInfo.startCursorPosition} />
+        <br>
+        My end position:<br>
+        <input type="text" readonly bind:value={cursorInfo.endCursorPosition} />
+    </div>
 </main>
 
 <style>
