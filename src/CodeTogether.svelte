@@ -67,7 +67,7 @@
 
 				console.log("All cursors inserted: ", textareaProperties);
 			}, {
-				"username": sessionInfo.username
+				"roomId": sessionInfo.roomId
 			});
 		},
 		error => {
@@ -97,6 +97,33 @@
 	}
 
 	let handleBackspace = function (message) {
+		if (message.username === sessionInfo.username)
+			return;
+
+		let start = textareaProperties.cursors[message.username].startCursorPosition;
+		let end = textareaProperties.cursors[message.username].endCursorPosition;
+
+		let before, after;
+		let newCursorStartPosition, newCursorEndPosition;
+		if (start === end) {
+			if (start === 0)
+				return;
+			before = textareaProperties.text.substring(0, start - 1);
+			newCursorStartPosition = start - 1;
+			newCursorEndPosition = start - 1;
+		} else {
+			before = textareaProperties.text.substring(0, start);
+			newCursorStartPosition = start;
+			newCursorEndPosition = start;
+		}
+		after = textareaProperties.text.substring(end);
+		textareaProperties.text = before + after;
+
+		textareaProperties.cursors[message.username].startCursorPosition = newCursorStartPosition;
+		textareaProperties.cursors[message.username].endCursorPosition = newCursorEndPosition;
+	}
+
+	let handleDelete = function (message) {
 		if (message.username === sessionInfo.username)
 			return;
 
