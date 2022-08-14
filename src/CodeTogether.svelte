@@ -39,6 +39,8 @@
 					handleNewUserConnected(message);
 				} else if (message.type === "insert") {
 					handleInsert(message);
+				} else if (message.type === "backspace") {
+					handleBackspace(message);
 				} else if (message.type === "navigation") {
 					handleNavigation(message);
 				}
@@ -94,6 +96,22 @@
 		textareaProperties.text = before + message.key + after;
 	}
 
+	let handleBackspace = function (message) {
+		if (message.username === sessionInfo.username)
+			return;
+
+		let start = textareaProperties.cursors[message.username].startCursorPosition;
+		let end = textareaProperties.cursors[message.username].endCursorPosition;
+
+		let before, after;
+		if (start === end)
+			before = textareaProperties.text.substring(0, start - 1);
+		else
+			before = textareaProperties.text.substring(0, start);
+		after = textareaProperties.text.substring(end);
+		textareaProperties.text = before + after;
+	}
+
 	let handleNewUserConnected = function (message) {
 		if (message.username === sessionInfo.username)
 			return;
@@ -115,7 +133,10 @@
 				username: sessionInfo.username,
 				...cursorInfo,
 				key: event.key
-			}), {});
+			}), {
+				"roomId": sessionInfo.roomId,
+				"username": sessionInfo.username
+			});
 		}
 	}
 </script>
