@@ -41,6 +41,8 @@
 					handleInsert(message);
 				} else if (message.type === "backspace") {
 					handleBackspace(message);
+				} else if (message.type === "delete") {
+					handleDelete(message);
 				} else if (message.type === "navigation") {
 					handleNavigation(message);
 				}
@@ -131,12 +133,21 @@
 		let end = textareaProperties.cursors[message.username].endCursorPosition;
 
 		let before, after;
-		if (start === end)
-			before = textareaProperties.text.substring(0, start - 1);
-		else
+		let newCursorStartPosition, newCursorEndPosition;
+		if (start === end) {
+			if (textareaProperties.text < end + 1)
+				return;
 			before = textareaProperties.text.substring(0, start);
-		after = textareaProperties.text.substring(end);
+			after = textareaProperties.text.substring(end + 1);
+		} else {
+			before = textareaProperties.text.substring(0, start);
+			after = textareaProperties.text.substring(end);
+		}
+		newCursorStartPosition = start;
+		newCursorEndPosition = start;
 		textareaProperties.text = before + after;
+		textareaProperties.cursors[message.username].startCursorPosition = newCursorStartPosition;
+		textareaProperties.cursors[message.username].endCursorPosition = newCursorEndPosition;
 	}
 
 	let handleNewUserConnected = function (message) {
