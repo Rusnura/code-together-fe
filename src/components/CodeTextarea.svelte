@@ -18,7 +18,7 @@
 
             let start = cursor.startCursorPosition;
             let end = cursor.endCursorPosition;
-            if (end - start === 0)
+            if (end === start)
                 continue;
 
             let before = text.substring(0, start);

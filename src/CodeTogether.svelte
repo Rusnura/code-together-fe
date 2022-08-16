@@ -17,7 +17,7 @@
 		cols: 150,
 		rows: 20,
 		text: '',
-		cursors: {}
+		cursors: []
 	}
 
 	let cursorInfo = {
@@ -61,10 +61,18 @@
 					if (client.username === sessionInfo.username)
 						continue;
 
-					textareaProperties.cursors[client.username] = {
-						startCursorPosition: client.startCursorPosition,
-						endCursorPosition: client.endCursorPosition
-					};
+
+					let existingUser = findCursorByOwner(client.username);
+					if (!existingUser) {
+						textareaProperties.cursors.push({
+							owner: client.username,
+							startCursorPosition: 0,
+							endCursorPosition: 0
+						});
+					} else {
+						existingUser.startCursorPosition = client.startCursorPosition;
+						existingUser.endCursorPosition = client.endCursorPosition;
+					}
 				}
 
 				console.log("All cursors inserted: ", textareaProperties);
@@ -83,16 +91,16 @@
 		if (message.username === sessionInfo.username)
 			return;
 
-		textareaProperties.cursors[message.username].startCursorPosition = message.startCursorPosition;
-		textareaProperties.cursors[message.username].endCursorPosition = message.endCursorPosition;
+		findCursorByOwner(message.username).startCursorPosition = message.startCursorPosition;
+		findCursorByOwner(message.username).endCursorPosition = message.endCursorPosition;
 	}
 
 	let handleInsert = function (message) {
 		if (message.username === sessionInfo.username)
 			return;
 
-		let start = textareaProperties.cursors[message.username].startCursorPosition;
-		let end = textareaProperties.cursors[message.username].endCursorPosition;
+		let start = findCursorByOwner(message.username).startCursorPosition;
+		let end = findCursorByOwner(message.username).endCursorPosition;
 		let before = textareaProperties.text.substring(0, start);
 		let after = textareaProperties.text.substring(end);
 		textareaProperties.text = before + message.key + after;
@@ -102,8 +110,8 @@
 		if (message.username === sessionInfo.username)
 			return;
 
-		let start = textareaProperties.cursors[message.username].startCursorPosition;
-		let end = textareaProperties.cursors[message.username].endCursorPosition;
+		let start = findCursorByOwner(message.username).startCursorPosition;
+		let end = findCursorByOwner(message.username).endCursorPosition;
 
 		let before, after;
 		let newCursorStartPosition, newCursorEndPosition;
@@ -121,16 +129,16 @@
 		after = textareaProperties.text.substring(end);
 		textareaProperties.text = before + after;
 
-		textareaProperties.cursors[message.username].startCursorPosition = newCursorStartPosition;
-		textareaProperties.cursors[message.username].endCursorPosition = newCursorEndPosition;
+		findCursorByOwner(message.username).startCursorPosition = newCursorStartPosition;
+		findCursorByOwner(message.username).endCursorPosition = newCursorEndPosition;
 	}
 
 	let handleDelete = function (message) {
 		if (message.username === sessionInfo.username)
 			return;
 
-		let start = textareaProperties.cursors[message.username].startCursorPosition;
-		let end = textareaProperties.cursors[message.username].endCursorPosition;
+		let start = findCursorByOwner(message.username).startCursorPosition;
+		let end = findCursorByOwner(message.username).endCursorPosition;
 
 		let before, after;
 		let newCursorStartPosition, newCursorEndPosition;
@@ -146,18 +154,25 @@
 		newCursorStartPosition = start;
 		newCursorEndPosition = start;
 		textareaProperties.text = before + after;
-		textareaProperties.cursors[message.username].startCursorPosition = newCursorStartPosition;
-		textareaProperties.cursors[message.username].endCursorPosition = newCursorEndPosition;
+		findCursorByOwner(message.username).startCursorPosition = newCursorStartPosition;
+		findCursorByOwner(message.username).endCursorPosition = newCursorEndPosition;
 	}
 
 	let handleNewUserConnected = function (message) {
 		if (message.username === sessionInfo.username)
 			return;
 
-		textareaProperties.cursors[message.username] = {
-			startCursorPosition: 0,
-			endCursorPosition: 0
-		};
+		let existingUser = findCursorByOwner(message.username);
+		if (!existingUser) {
+			textareaProperties.cursors.push({
+				owner: message.username,
+				startCursorPosition: 0,
+				endCursorPosition: 0
+			});
+		} else {
+			existingUser.startCursorPosition = 0;
+			existingUser.endCursorPosition = 0;
+		}
 	};
 
 	let failureLoginCallback = function() {
@@ -176,6 +191,11 @@
 				"username": sessionInfo.username
 			});
 		}
+	}
+
+	let findCursorByOwner = function (username) {
+		let cursors = textareaProperties.cursors.filter(u => u.owner === username);
+		return cursors.length === 1 ? cursors[0] : undefined;
 	}
 </script>
 
