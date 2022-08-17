@@ -64,11 +64,11 @@
 
 					let existingUser = findCursorByOwner(client.username);
 					if (!existingUser) {
-						textareaProperties.cursors.push({
+						textareaProperties.cursors = [...textareaProperties.cursors, {
 							owner: client.username,
 							startCursorPosition: 0,
 							endCursorPosition: 0
-						});
+						}];
 					} else {
 						existingUser.startCursorPosition = client.startCursorPosition;
 						existingUser.endCursorPosition = client.endCursorPosition;
@@ -93,6 +93,7 @@
 
 		findCursorByOwner(message.username).startCursorPosition = message.startCursorPosition;
 		findCursorByOwner(message.username).endCursorPosition = message.endCursorPosition;
+		textareaProperties.cursors = textareaProperties.cursors;
 	}
 
 	let handleInsert = function (message) {
@@ -164,11 +165,11 @@
 
 		let existingUser = findCursorByOwner(message.username);
 		if (!existingUser) {
-			textareaProperties.cursors.push({
+			textareaProperties.cursors = [...textareaProperties.cursors, {
 				owner: message.username,
 				startCursorPosition: 0,
 				endCursorPosition: 0
-			});
+			}];
 		} else {
 			existingUser.startCursorPosition = 0;
 			existingUser.endCursorPosition = 0;
