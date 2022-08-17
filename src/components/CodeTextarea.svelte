@@ -5,27 +5,37 @@
     export let cursorInfo;
 
     let onKeyDownEvent = function(e) {
-        console.log("onKeyDownEvent: ", e, "Key={", e.key, "}");
         onKeyDownCallback(e);
     };
 
     let doHighlightText = function (text) {
-        let cursors = Object.entries(textareaProperties.cursors);
-        let styled = "";
-        for (let [username, cursor] of cursors) {
-            if (username === cursorInfo.cursorOwner)
+        let cursors = textareaProperties.cursors.sort((a, b) => b.startCursorPosition - a.startCursorPosition);
+        let processed = [];
+        console.log("+++ doHighlightText(cursors): ", cursors);
+        let styled = text;
+        for (let cursor of cursors) {
+            if (cursor.owner === cursorInfo.cursorOwner)
                 continue;
 
             let start = cursor.startCursorPosition;
             let end = cursor.endCursorPosition;
-            if (end === start)
+            let isProcessedAlready = processed.filter(p => p.start === start).length > 0;
+            if (isProcessedAlready) {
                 continue;
+            }
 
-            let before = text.substring(0, start);
-            let middle = text.substring(start, end);
-            let after = text.substring(end, text.length);
-
-            styled += before + "<mark style='border-radius: 3px; background-color: #8c97d5'>" + middle + "</mark>" + after;
+            if (start === end && start > 0) {
+                let before = styled.substring(0, start - 1);
+                let middle = styled.substring(start - 1, end);
+                let after = styled.substring(end, styled.length);
+                styled = before + "<mark style='display: inline; border-radius: 3px; background-color: #8c97d5'>" + middle + "</mark>" + after;
+            } else {
+                let before = styled.substring(0, start);
+                let middle = styled.substring(start, end);
+                let after = styled.substring(end, styled.length);
+                styled = before + "<mark style='display: inline; border-radius: 3px; background-color: #8c97d5'>" + middle + "</mark>" + after;
+            }
+            processed.push({start: start, end: end, length: length});
         }
         return styled;
     }
