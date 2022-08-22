@@ -105,6 +105,9 @@
 		let before = textareaProperties.text.substring(0, start);
 		let after = textareaProperties.text.substring(end);
 		textareaProperties.text = before + message.key + after;
+
+		findCursorByOwner(message.username).startCursorPosition = message.startCursorPosition;
+		findCursorByOwner(message.username).endCursorPosition = message.endCursorPosition;
 	}
 
 	let handleBackspace = function (message) {
@@ -115,23 +118,18 @@
 		let end = findCursorByOwner(message.username).endCursorPosition;
 
 		let before, after;
-		let newCursorStartPosition, newCursorEndPosition;
 		if (start === end) {
 			if (start === 0)
 				return;
 			before = textareaProperties.text.substring(0, start - 1);
-			newCursorStartPosition = start - 1;
-			newCursorEndPosition = start - 1;
 		} else {
 			before = textareaProperties.text.substring(0, start);
-			newCursorStartPosition = start;
-			newCursorEndPosition = start;
 		}
 		after = textareaProperties.text.substring(end);
 		textareaProperties.text = before + after;
 
-		findCursorByOwner(message.username).startCursorPosition = newCursorStartPosition;
-		findCursorByOwner(message.username).endCursorPosition = newCursorEndPosition;
+		findCursorByOwner(message.username).startCursorPosition = message.startCursorPosition;
+		findCursorByOwner(message.username).endCursorPosition = message.endCursorPosition;
 	}
 
 	let handleDelete = function (message) {
@@ -142,7 +140,6 @@
 		let end = findCursorByOwner(message.username).endCursorPosition;
 
 		let before, after;
-		let newCursorStartPosition, newCursorEndPosition;
 		if (start === end) {
 			if (textareaProperties.text < end + 1)
 				return;
@@ -152,11 +149,10 @@
 			before = textareaProperties.text.substring(0, start);
 			after = textareaProperties.text.substring(end);
 		}
-		newCursorStartPosition = start;
-		newCursorEndPosition = start;
 		textareaProperties.text = before + after;
-		findCursorByOwner(message.username).startCursorPosition = newCursorStartPosition;
-		findCursorByOwner(message.username).endCursorPosition = newCursorEndPosition;
+
+		findCursorByOwner(message.username).startCursorPosition = message.startCursorPosition;
+		findCursorByOwner(message.username).endCursorPosition = message.endCursorPosition;
 	}
 
 	let handleNewUserConnected = function (message) {

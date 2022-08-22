@@ -5,6 +5,9 @@
     export let cursorInfo;
 
     let onKeyDownEvent = function(e) {
+        let textarea = document.getElementById("codeTextarea");
+        cursorInfo.startCursorPosition = textarea.selectionStart;
+        cursorInfo.endCursorPosition = textarea.selectionEnd;
         onKeyDownCallback(e);
     };
 
@@ -40,8 +43,8 @@
         return styled;
     }
 
-    let onKeyUpEvent = function(e) {
-        console.log("onKeyUpEvent: ", e.key);
+    let onClickEvent = function(e) {
+        console.log("onClickEvent: ", e.key);
         let textarea = document.getElementById("codeTextarea");
         cursorInfo.startCursorPosition = textarea.selectionStart;
         cursorInfo.endCursorPosition = textarea.selectionEnd;
@@ -63,8 +66,7 @@
                   spellcheck="false"
                   bind:value={textareaProperties.text}
                   on:keydown={onKeyDownEvent}
-                  on:keyup={onKeyUpEvent}
-                  on:click={onKeyUpEvent}
+                  on:click={onClickEvent}
                   on:scroll={handleScroll}
         ></textarea>
     </div>
