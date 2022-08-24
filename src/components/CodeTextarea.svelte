@@ -14,7 +14,6 @@
     let doHighlightText = function (text) {
         let cursors = textareaProperties.cursors.sort((a, b) => b.startCursorPosition - a.startCursorPosition);
         let processed = [];
-        console.log("+++ doHighlightText(cursors): ", cursors);
         let styled = text;
         for (let cursor of cursors) {
             if (cursor.owner === cursorInfo.cursorOwner)
@@ -43,8 +42,11 @@
         return styled;
     }
 
-    let onClickEvent = function(e) {
-        console.log("onClickEvent: ", e.key);
+    let onNavigationEvent = function(e) {
+        let navigationKeys = [undefined, null, "ArrowUp", "ArrowDown", "ArrowRight", "ArrowLeft", "Home", "End"];
+        if (!navigationKeys.includes(e.key))
+            return;
+
         let textarea = document.getElementById("codeTextarea");
         cursorInfo.startCursorPosition = textarea.selectionStart;
         cursorInfo.endCursorPosition = textarea.selectionEnd;
@@ -66,7 +68,8 @@
                   spellcheck="false"
                   bind:value={textareaProperties.text}
                   on:keydown={onKeyDownEvent}
-                  on:click={onClickEvent}
+                  on:keyup={onNavigationEvent}
+                  on:click={onNavigationEvent}
                   on:scroll={handleScroll}
         ></textarea>
     </div>
